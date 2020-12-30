@@ -9,18 +9,15 @@ class Day04Test {
     private val solution = Day04()
 
     @Test fun solvePart1_sampleInput() {
-        assertThat(solution.solvePart1(File("src/test/resources/aoc2020/day04.sample")))
-            .isEqualTo(2)
+        assertThat(solution.solvePart1(File("src/test/resources/aoc2020/day04.sample"))).isEqualTo(2)
     }
 
     @Test fun solvePart2_sampleInputInvalid() {
-        assertThat(solution.solvePart2(File("src/test/resources/aoc2020/day04.sample.invalid")))
-            .isEqualTo(0)
+        assertThat(solution.solvePart2(File("src/test/resources/aoc2020/day04.sample.invalid"))).isEqualTo(0)
     }
 
     @Test fun solvePart2_sampleInputValid() {
-        assertThat(solution.solvePart2(File("src/test/resources/aoc2020/day04.sample.valid")))
-            .isEqualTo(4)
+        assertThat(solution.solvePart2(File("src/test/resources/aoc2020/day04.sample.valid"))).isEqualTo(4)
     }
 
 }
