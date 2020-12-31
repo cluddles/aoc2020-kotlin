@@ -14,4 +14,13 @@ enum class Dir8(val delta: Vec) {
     SW(Vec(-1, 1)),
     W (Vec(-1, 0)),
     NW(Vec(-1, -1)),
+    ;
+
+    /**
+     * Rotate by the given number of 45 degree steps.
+     *
+     * @param steps Steps to rotate; positive for clockwise, negative for anti-clockwise
+     * @return Rotated direction
+     */
+    fun rotate(steps: Int) : Dir8 { return values()[Math.floorMod(ordinal + steps, 8)] }
 }
