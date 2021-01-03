@@ -20,7 +20,7 @@ class Day18 {
 
     // Evaluate simple a + b * c... expression
     private fun reduce(line: String, reduceOps: String = "+*") : String {
-        var tokens = line.split(" ").toMutableList()
+        var tokens = line.split(" ")
         var i = 0
         while (i + 2 < tokens.size) {
             if (reduceOps.contains(tokens[i+1])) {
