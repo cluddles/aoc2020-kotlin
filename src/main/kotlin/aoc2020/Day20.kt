@@ -88,6 +88,7 @@ class Day20 {
         // just check each edge of a tile against each other edge of the other (flipped and non-flipped)
         // Based on that you can figure out rotation, flipX, flipY
         // Then I think you just place a single corner and iterate out from there?
+        return -1L
     }
 
     companion object {
