@@ -16,7 +16,7 @@ class Day19Test {
     }
 
     @Test fun solvePart2_sampleInput1() {
-//        assertThat(solution.solvePart2(File("src/test/resources/aoc2020/day19.sample.2"))).isEqualTo(12)
+        assertThat(solution.solvePart2(File("src/test/resources/aoc2020/day19.sample.2"))).isEqualTo(12)
     }
 
 }
