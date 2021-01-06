@@ -1,7 +1,6 @@
 package aoc2020
 
 import java.io.File
-import kotlin.collections.ArrayList
 
 // Don't forget that typealiases aren't local, so if you use the name "Rule" you're
 // just going to have clashes later...

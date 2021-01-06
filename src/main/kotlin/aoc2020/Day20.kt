@@ -1,102 +1,185 @@
 package aoc2020
 
+import util.Dir8
+import util.Vec
 import java.io.File
-import kotlin.collections.ArrayList
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 class Day20 {
 
-    private val N = 0
-    private val E = 1
-    private val S = 2
-    private val W = 3
+    private val snek = listOf(
+        "                  # ",
+        "#    ##    ##    ###",
+        " #  #  #  #  #  #   ",
+    )
 
-    data class Tile(val id: Int, val edges: List<String>) {
-        constructor(id: Int, n: String, e: String, s: String, w: String) : this(id, listOf(n, e, s, w))
+    // Permutations for tiled data are:
+    //   all 4 rotations
+    //   flipX + all 4 rotations
+
+    data class Tile(val id: Int, val data: List<String>) {
+        val edges = listOf(
+            data.first(),
+            data.map { it.last() }.joinToString(""),
+            data.last(),
+            data.map { it.first() }.joinToString("")
+        )
+
+        private fun rotate() = Tile(id, Composite.rotate(data))
+
+        private fun flipX() = Tile(id, Composite.flipX(data))
+
+        fun permutations() : List<Tile> {
+            val result = arrayListOf(this)
+            (1..3).forEach { _ -> result.add(result.last().rotate()) }
+            result.add(flipX())
+            (1..3).forEach { _ -> result.add(result.last().rotate()) }
+            return result
+        }
+
     }
 
+    data class Composite(var data: List<String>) {
+        var permutation = 0;
+        fun nextPermutation() : Boolean {
+            if (permutation >= 7) return false
+            data = rotate(data)
+            if (permutation == 4) data = flipX(data)
+            permutation++
+            return true
+        }
+
+        // Make these available to non-Tiles to use
+        companion object {
+            fun rotate(data: List<String>): List<String> =
+                data.indices.map { j ->
+                    data.first().indices.map { i ->
+                        data[data.first().length - 1 - i][j]
+                    }.joinToString("")
+                }
+
+            fun flipX(data: List<String>): List<String> = data.map { it.reversed() }
+        }
+    }
+
+    // Map of tile id to tile
     fun parse(src: File) : Map<Int, Tile> {
         val lines = src.readLines()
-        val tiles = HashMap<Int, Tile>()
         // Tile: xxxx, then 10 lines of bitmap data, then blank line
-        for (i in lines.indices step 12) {
-            parseTile(lines.slice(i..i+10)).let { tiles[it.id] = it }
+        return (lines.indices step 12)
+            .map { parseTile(lines.slice(it..it+10)) }
+            .map { Pair(it.id, it) }
+            .toMap()
+    }
+
+    // Tile id from first line, char data from the others
+    fun parseTile(lines: List<String>) : Tile = Tile(lines[0].substring(5, lines[0].length - 1).toInt(), lines.drop(1))
+
+    // Attempts to arrange the given tiles
+    // Assumes there's only one place that each tile will fit - apparently this is the case
+    fun arrange(tiles: Map<Int, Tile>) : List<List<Tile>> {
+        var unplaced = tiles.values
+        val board = HashMap<Vec, Tile>()
+        while (unplaced.isNotEmpty()) {
+            unplaced = unplaced.filter { !place(it, board) }
         }
-        return tiles
-    }
-
-    fun parseTile(lines: List<String>) : Tile {
-        return Tile(
-            lines[0].substring(5, lines[0].length - 1).toInt(),
-            lines[1],
-            lines.takeLast(10).map { it[9] }.joinToString(""),
-            lines[10],
-            lines.takeLast(10).map { it[0] }.joinToString("")
-        )
-    }
-
-    fun flipX(tile: Tile) = Tile(tile.id, tile.edges[N].reversed(), tile.edges[W], tile.edges[S].reversed(), tile.edges[E])
-    fun flipY(tile: Tile) = Tile(tile.id, tile.edges[S], tile.edges[E].reversed(), tile.edges[N], tile.edges[W].reversed())
-
-    fun rot(tile: Tile, steps: Int) : Tile {
-        return when(steps) {
-            1 -> Tile(tile.id, tile.edges[W].reversed(), tile.edges[N], tile.edges[E].reversed(), tile.edges[S])
-            2 -> flipX(flipY(tile))
-            3 -> Tile(tile.id, tile.edges[E], tile.edges[S].reversed(), tile.edges[W], tile.edges[N].reversed())
-            else -> throw IllegalArgumentException("Unsupported rot steps $steps")
+        val min = Vec(board.keys.minOf { it.x }, board.keys.minOf { it.y })
+        val len = sqrt(tiles.size.toDouble()).roundToInt()
+        return (min.y until min.y + len).map { j ->
+            (min.x until min.x + len).map { i ->
+                board[Vec(i, j)]!!
+            }
         }
     }
 
-    fun solvePart1(src: File) : Long {
-        val tiles = parse(src)
-        val joints = HashMap<Int, HashSet<Int>>()
-        for (t in tiles.values) {
-            // I think there are 8 permutations in total
-            val permutations = listOf(
-                t,
-                flipX(t),
-                rot(t, 1),
-                flipY(rot(t, 1)),
-                rot(t, 2),
-                flipY(t),
-                rot(t, 3),
-                flipY(rot(t, 3)))
-            for ((index, i) in permutations.withIndex()) {
-                for (j in tiles.values) {
-                    if (i.id == j.id) continue
-                    if (i.edges[N] == j.edges[S]) {
-                        println("Match N: " + i.id + " (perm $index) " + j.id)
-                    } else if (i.edges[E] == j.edges[W]) {
-                        println("Match E: " + i.id + " (perm $index) " + j.id)
-                    } else if (i.edges[S] == j.edges[N]) {
-                        println("Match S: " + i.id + " (perm $index) " + j.id)
-                    } else if (i.edges[W] == j.edges[E]) {
-                        println("Match W: " + i.id + " (perm $index) " + j.id)
-                    } else { continue }
-                    joints.getOrPut(i.id, { hashSetOf() } ).add(j.id)
-                    joints.getOrPut(j.id, { hashSetOf() } ).add(i.id)
+    // Attempts to place a tile onto a board of other tiles
+    fun place(tile: Tile, board: HashMap<Vec, Tile>) : Boolean {
+        // Place starting tile
+        if (board.isEmpty()) {
+            board[Vec(0, 0)] = tile
+            return true
+        }
+        // For each subsequent tile, generate 8 possible permutations and try to place onto board
+        val permutations = tile.permutations()
+        for (i in permutations) {
+            for (j in board.entries) {
+                val dir = when {
+                    i.edges[0] == j.value.edges[2] -> Dir8.S
+                    i.edges[1] == j.value.edges[3] -> Dir8.W
+                    i.edges[2] == j.value.edges[0] -> Dir8.N
+                    i.edges[3] == j.value.edges[1] -> Dir8.E
+                    else -> continue
+                }
+                board[j.key + dir.delta] = i
+                return true
+            }
+        }
+        return false
+    }
+
+    // Strip tile edges and combine data
+    // Init permutation state
+    fun composite(layout: List<List<Tile>>) : Composite = Composite(
+        layout.flatMap { j ->
+            (1..8).map { y ->
+                j.joinToString("") { it.data[y].drop(1).dropLast(1) }
+            }
+        }
+    )
+
+    // Looks for pattern in the given composite
+    // Modifies the composite to keep track
+    fun findPattern(composite: Composite, pattern: List<String>) {
+        // Convert to/from char array for this function
+        // It's hacky, but I can't face trying to refactor everything to use CharArrays now
+        val data = composite.data.map { it.toCharArray() }
+        for (i in 0 until data.size - pattern.size) {
+            cellLoop@ for (j in 0 until data.first().size - pattern.first().length) {
+                for (m in pattern.indices) {
+                   for (n in pattern.first().indices) {
+                        if (pattern[m][n] == ' ') continue
+                        if (data[i+m][j+n] == '.') continue@cellLoop
+                    }
+                }
+
+                for (m in pattern.indices) {
+                    for (n in pattern.first().indices) {
+                        if (pattern[m][n] == ' ') continue
+                        data[i+m][j+n] = 'O'
+                    }
                 }
             }
         }
-        println(joints)
-        return joints.entries.filter { it.value.size == 2 }.map { it.key }.fold(1L, { a, b -> a * b })
+        composite.data = data.map { it.joinToString("") }
     }
 
-    fun solvePart2(src: File) : Long {
-        // Okay, so part 2 needs us to actually stitch the image together
-        // Going to need to do some hefty refactoring
-        // One thing that strikes me: instead of calculating all the silly permutations, can basically
-        // just check each edge of a tile against each other edge of the other (flipped and non-flipped)
-        // Based on that you can figure out rotation, flipX, flipY
-        // Then I think you just place a single corner and iterate out from there?
-        return -1L
+    fun solvePart1(src: File) : Long {
+        // Arrange all tiles
+        val layout = arrange(parse(src))
+        // Multiply id of all 4 corner tiles
+        return listOf(layout.first(), layout.last())
+            .map { it.first().id.toLong() * it.last().id }
+            .fold(1L, { a, b -> a * b } )
+    }
+
+    fun solvePart2(src: File) : Int {
+        // Arrange all tiles, generate composite, search for "sea monsters"
+        val layout = arrange(parse(src))
+        val composite = composite(layout)
+        do findPattern(composite, snek) while (composite.nextPermutation())
+        // Return all # cells that are not part of snek
+        return composite.data.sumOf { line -> line.count { c -> c == '#' }}
     }
 
     companion object {
+
         @JvmStatic fun main(arg: Array<String>) {
             val solver = Day20()
             val file = File("src/main/resources/aoc2020/day20.input")
             println("Part1: " + solver.solvePart1(file))
-            // println("Part2: " + solver.solvePart2(file))
+            println("Part2: " + solver.solvePart2(file))
+
         }
     }
 
