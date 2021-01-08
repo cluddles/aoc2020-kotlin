@@ -12,4 +12,8 @@ class Day22Test {
         assertThat(solution.solvePart1(File("src/test/resources/aoc2020/day22.sample"))).isEqualTo(306)
     }
 
+    @Test fun solvePart2_sampleInput() {
+        assertThat(solution.solvePart2(File("src/test/resources/aoc2020/day22.sample"))).isEqualTo(291)
+    }
+
 }
