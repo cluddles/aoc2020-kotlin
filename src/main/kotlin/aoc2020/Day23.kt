@@ -1,100 +1,62 @@
 package aoc2020
 
-import kotlin.math.sign
-
 class Day23 {
 
-    fun solvePart1(input: String) : String {
-        // Current cup will always be the first in the string
-        var state = input
-        (1..100).forEach { _ ->
-            // Destination is current-1
-            var destination = state.first() - 1
-            // Take the 3 clockwise cups
-            val pickup = state.drop(1).take(3)
-            // Remove the current and picked up cups; place current at the end
-            state = state.drop(4) + state.take(1)
-            // Bit of extra logic to make sure destination is present, and tick down (loop to highest)
-            while (pickup.contains(destination) || destination < '1') {
-                destination--
-                if (destination < '1') destination = '9'
-            }
-            // Insert picked up cups into the correct position
-            state = state.split(destination.toString()).let { it[0] + destination + pickup + it[1] }
-        }
-        // Result is cups listed clockwise from 1 (without 1)
-        return state.split("1").let { it[1] + it[0] }
+    private fun inVal(input: String, pos: Int) : Int {
+        return if (pos < input.length) Character.getNumericValue(input[pos]) else pos+1
     }
 
-    class CupCircle(input: String, val size: Int) {
-        val first: Cup = Cup(Character.getNumericValue(input.first()))
-        var current = first
-
-        init {
-            first.next = first
-            first.prev = first
-            (1 until size).forEach {
-                insertAfter(if (it < input.length) Character.getNumericValue(input[it]) else it+1)
-            }
-            current.next = first
-            current = first
+    private fun solve(input: String, numCups: Int, numIterations: Int) : IntArray {
+        // Based on the suggestion:
+        // "the nth index is the label of the cup that comes after the cup labeled n"
+        // Ignore index 0, it's meaningless (we have no 0 in the input)
+        val cups = IntArray(numCups + 1)
+        var current = 0
+        (0 until numCups).forEach {
+            cups[current] = inVal(input, it)
+            current = cups[current]
         }
+        // Make it loop correctly, set the initial cup to the right one
+        cups[current] = inVal(input, 0)
+        current = cups[current]
 
-        // Insert after current; moves along afterwards
-        fun insertAfter(value: Int) {
-            current.next = Cup(value, current, current.next)
-            current.next!!.next!!.prev = current
-            next()
-        }
-        fun next() : Int {
-            val result = current.value
-            current = current.next!!
-            return result
-        }
-        fun pop() : Int {
-            val result = next()
-            current.prev = current.prev!!.prev
-            current.prev!!.prev!!.next = current
-            return result
-        }
-        fun step(steps: Int) {
-            when (steps.sign) {
-                -1 -> (steps..-1).forEach { _ -> current = current.prev!! }
-                +1 -> (+1..steps).forEach { _ -> current = current.next!! }
-                else -> {}
-            }
-        }
-        // Such that next() would return the desired value
-        fun find(value: Int) { while (current.value != value) current = current.next!! }
-
-    }
-
-    class Cup(val value: Int, var prev: Cup? = null, var next: Cup? = null)
-
-    fun solvePart2(input: String) : Long {
-        // A million cups
-        val cups = CupCircle(input, 1000000)
-        (1..10000000).forEach {
-            println(it)
+        (1..numIterations).forEach {
             // Destination is current-1
-            var destination = cups.next() - 1
+            var dest = current - 1
             // Take the 3 clockwise cups
-            val pickup = (1..3).map { cups.pop() }
+            val p1 = cups[current]
+            val p2 = cups[p1]
+            val p3 = cups[p2]
+            cups[current] = cups[p3]
             // Make sure the destination is available
-            while (pickup.contains(destination) || destination < 1) {
-                destination--
-                if (destination < 1) destination = cups.size - input.length
+            while (p1 == dest || p2 == dest || p3 == dest || dest < 1) {
+                dest--
+                if (dest < 1) dest = numCups
             }
-            // Seek to the destination
-            cups.find(destination)
-            // Insert picked up cups, then fix the current position
-            pickup.forEach { cups.insertAfter(it) }
-            cups.step(-3)
+            // Insert picked up cups at destination
+            val n = cups[dest]
+            cups[dest] = p1
+            cups[p3] = n
+            // Seek to the next cup after current
+            current = cups[current]
         }
-        cups.find(1)
-        cups.step(1)
-        return cups.next().toLong() * cups.next()
+        return cups
     }
+
+    fun solvePart1(input: String) : String {
+        // Cups clockwise after 1
+        val cups = solve(input, input.length, 100)
+        var current = cups[1]
+        var result = ""
+        while (current != 1) {
+            result += current
+            current = cups[current]
+        }
+        return result
+    }
+
+    // Multiply the two cups that are clockwise from 1
+    fun solvePart2(input: String) = solve(input, 1_000_000, 10_000_000).let { it[1].toLong() * it[it[1]] }
 
     companion object {
         @JvmStatic fun main(arg: Array<String>) {

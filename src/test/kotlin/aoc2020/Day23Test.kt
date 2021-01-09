@@ -12,7 +12,7 @@ class Day23Test {
     }
 
     @Test fun solvePart2_sampleInput() {
-        // assertThat(solution.solvePart2("389125467")).isEqualTo(149245887792L)
+        assertThat(solution.solvePart2("389125467")).isEqualTo(149245887792L)
     }
 
 }
