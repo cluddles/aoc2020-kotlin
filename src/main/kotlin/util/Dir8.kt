@@ -5,15 +5,15 @@ package util
  *
  * @property delta The 2d vector representation of this direction
  */
-enum class Dir8(val delta: Vec) {
-    N (Vec(0, -1)),
-    NE(Vec(1, -1)),
-    E (Vec(1, 0)),
-    SE(Vec(1, 1)),
-    S (Vec(0, 1)),
-    SW(Vec(-1, 1)),
-    W (Vec(-1, 0)),
-    NW(Vec(-1, -1)),
+enum class Dir8(val delta: Vec2) {
+    N (Vec2(0, -1)),
+    NE(Vec2(1, -1)),
+    E (Vec2(1, 0)),
+    SE(Vec2(1, 1)),
+    S (Vec2(0, 1)),
+    SW(Vec2(-1, 1)),
+    W (Vec2(-1, 0)),
+    NW(Vec2(-1, -1)),
     ;
 
     /**

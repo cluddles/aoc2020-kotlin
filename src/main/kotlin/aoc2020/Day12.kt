@@ -1,7 +1,7 @@
 package aoc2020
 
 import util.Dir8
-import util.Vec
+import util.Vec2
 import java.io.File
 
 class Day12 {
@@ -13,7 +13,7 @@ class Day12 {
     }
 
     fun solvePart1(src: File) : Int {
-        var pos = Vec(0, 0)
+        var pos = Vec2(0, 0)
         var dir = Dir8.E
         src.forEachLine {
             val (op, arg) = parseLine(it)
@@ -27,13 +27,13 @@ class Day12 {
     }
 
     fun solvePart2(src: File) : Int {
-        var pos = Vec(0, 0)
-        var waypoint = Vec(10, -1)
+        var pos = Vec2(0, 0)
+        var waypoint = Vec2(10, -1)
         src.forEachLine {
             val (op, arg) = parseLine(it)
             when (op) {
                 'F' -> pos += waypoint * arg
-                'R' -> for (i in 0 until arg step 90) waypoint = Vec(-waypoint.y, waypoint.x)
+                'R' -> for (i in 0 until arg step 90) waypoint = Vec2(-waypoint.y, waypoint.x)
                 else -> waypoint += Dir8.valueOf(op.toString()).delta * arg
             }
         }

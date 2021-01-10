@@ -1,7 +1,7 @@
 package aoc2020
 
 import util.Dir8
-import util.Vec
+import util.Vec2
 import java.io.File
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -80,24 +80,24 @@ class Day20 {
     // Assumes there's only one place that each tile will fit - apparently this is the case
     fun arrange(tiles: Map<Int, Tile>) : List<List<Tile>> {
         var unplaced = tiles.values
-        val board = HashMap<Vec, Tile>()
+        val board = HashMap<Vec2, Tile>()
         while (unplaced.isNotEmpty()) {
             unplaced = unplaced.filter { !place(it, board) }
         }
-        val min = Vec(board.keys.minOf { it.x }, board.keys.minOf { it.y })
+        val min = Vec2(board.keys.minOf { it.x }, board.keys.minOf { it.y })
         val len = sqrt(tiles.size.toDouble()).roundToInt()
         return (min.y until min.y + len).map { j ->
             (min.x until min.x + len).map { i ->
-                board[Vec(i, j)]!!
+                board[Vec2(i, j)]!!
             }
         }
     }
 
     // Attempts to place a tile onto a board of other tiles
-    fun place(tile: Tile, board: HashMap<Vec, Tile>) : Boolean {
+    fun place(tile: Tile, board: HashMap<Vec2, Tile>) : Boolean {
         // Place starting tile
         if (board.isEmpty()) {
-            board[Vec(0, 0)] = tile
+            board[Vec2(0, 0)] = tile
             return true
         }
         // For each subsequent tile, generate 8 possible permutations and try to place onto board
